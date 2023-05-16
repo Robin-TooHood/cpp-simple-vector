@@ -43,7 +43,11 @@ public:
     // Перемещающий оператор присваивания
     ArrayPtr &operator=(ArrayPtr &&other)
     {
-        raw_ptr_ = std::exchange(other.raw_ptr_, nullptr);
+        if (raw_ptr_ == other.raw_ptr_)
+        {
+            return *this;
+        }
+        swap(other);
         return *this;
     };
 

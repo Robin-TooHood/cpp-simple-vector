@@ -68,7 +68,7 @@ public:
 
     SimpleVector &operator=(const SimpleVector &rhs)
     {
-        if (&items_ == &(rhs.items_))
+        if (*this == rhs)
         {
             return *this;
         }
@@ -80,9 +80,9 @@ public:
     // Конструктор перемещения
     SimpleVector(SimpleVector &&other)
     {
-        other.capacity_ = std::exchange(capacity_, other.capacity_);
-        other.size_ = std::exchange(size_, other.size_);
-        other.items_ = std::exchange(items_, other.items_);
+        std::swap(capacity_, other.capacity_);
+        std::swap(size_, other.size_);
+        std::swap(items_, other.items_);
     }
 
     // Оператор перемещения
@@ -127,10 +127,8 @@ public:
     // "Удаляет" последний элемент вектора. Вектор не должен быть пустым
     void PopBack() noexcept
     {
-        if (!IsEmpty())
-        {
-            --size_;
-        }
+        assert(!IsEmpty());
+        --size_;
     }
 
     // Вставляет значение value в позицию pos.
@@ -154,6 +152,8 @@ public:
 
     Iterator Insert(ConstIterator pos, Type &&value)
     {
+        assert(pos <= end());
+        assert(pos >= begin());
         if (pos == cend())
         {
             PushBack(std::move(value));
@@ -170,6 +170,8 @@ public:
     // Удаляет элемент вектора в указанной позиции
     Iterator Erase(ConstIterator pos)
     {
+        assert(pos <= end());
+        assert(pos >= begin());
         size_t curr_index = pos - begin();
         if (pos < (end() - 1))
         {
@@ -201,12 +203,14 @@ public:
     // Возвращает ссылку на элемент с индексом index
     Type &operator[](size_t index) noexcept
     {
+        assert(index < size_);
         return items_[index];
     }
 
     // Возвращает константную ссылку на элемент с индексом index
     const Type &operator[](size_t index) const noexcept
     {
+        assert(index < size_);
         return items_[index];
     }
 
@@ -242,8 +246,6 @@ public:
             ArrayPtr<Type> temp(new_capacity);
             std::move(begin(), end(), temp.Get());
             items_.swap(temp);
-
-            size_ = new_size;
             capacity_ = new_capacity;
         }
         else if (new_size > size_)
@@ -252,12 +254,8 @@ public:
             {
                 items_[i] = Type{};
             }
-            size_ = new_size;
         }
-        else
-        {
-            size_ = new_size;
-        }
+        size_ = new_size;
     }
 
     // Резервирование памяти
